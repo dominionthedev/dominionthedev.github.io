@@ -14,15 +14,31 @@
   --color-phosphor: oklch(85% 0.22 155);
   --color-static: oklch(55% 0.02 295);
 
-  /* Type */
-  --font-mono: "Commit Mono", ui-monospace, "SF Mono", monospace;
-  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Type — one variable font (Recursive), five registers dialed by axis,
+     not two typefaces pretending to relate. MONO: 0=proportional, 1=full
+     monospace. CASL: 0=precise/linear, 1=rounded/casual. */
+  --font-recursive: "Recursive Variable", ui-monospace, monospace;
 
-  --text-display: clamp(2.75rem, 6vw, 4.5rem);
-  --text-header: clamp(1.75rem, 3.5vw, 2.25rem);
-  --text-body: 1.0625rem;
+  /* terminal / code / commands — full precision, faint warmth so it
+     doesn't read as robotic */
+  --vf-terminal: "MONO" 1, "CASL" 0.15;
+  /* display / section headers — mostly-mono with real presence */
+  --vf-display: "MONO" 0.8, "CASL" 0.35;
+  /* UI / labels / waypoint nav — coldest register, pure data */
+  --vf-label: "MONO" 1, "CASL" 0;
+  /* body / prose — dialed OFF mono entirely for reading comfort, still
+     warm */
+  --vf-body: "MONO" 0, "CASL" 0.3;
+  /* philosophy proof / quotes — the literal midpoint between terminal
+     and prose. impossible with two separate typefaces; this register
+     only exists because it's one axis, not two fonts. */
+  --vf-quote: "MONO" 0.5, "CASL" 0.45;
+
+  --text-display: clamp(3rem, 6.5vw, 5rem);
+  --text-header: clamp(2rem, 4vw, 2.6rem);
+  --text-body: 1.125rem;
   --text-label: 0.8125rem;
-  --text-terminal: 0.9375rem;
+  --text-terminal: 1rem;
 
   --tracking-tight: -0.02em;
   --tracking-wide: 0.08em;
@@ -44,8 +60,8 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
   --space-12: 3rem;
-  --space-16: 4rem;
-  --space-24: 6rem;
+  --space-16: 4.5rem;
+  --space-24: 7rem;
 
   /* Effects */
   --glow-pulse: 0 0 24px oklch(65% 0.25 350 / 0.35);
@@ -61,12 +77,20 @@ html {
   background: var(--color-void);
   color-scheme: dark;
   scroll-behavior: smooth;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
 }
 
 body {
   background: var(--color-void);
   color: var(--color-signal);
-  font-family: var(--font-sans);
+  font-family: var(--font-recursive);
+  font-variation-settings: var(--vf-body);
+  font-weight: 380;
   font-size: var(--text-body);
   line-height: var(--leading-body);
   margin: 0;
@@ -180,10 +204,11 @@ body::after {
 h1,
 h2,
 h3 {
-  font-family: var(--font-mono);
+  font-family: var(--font-recursive);
+  font-variation-settings: var(--vf-display);
+  font-weight: 650;
   letter-spacing: var(--tracking-tight);
   margin: 0;
-  font-weight: 600;
 }
 
 h1 {
@@ -194,7 +219,9 @@ h2 {
 }
 
 .label {
-  font-family: var(--font-mono);
+  font-family: var(--font-recursive);
+  font-variation-settings: var(--vf-label);
+  font-weight: 500;
   font-size: var(--text-label);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;

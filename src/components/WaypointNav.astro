@@ -92,7 +92,8 @@ const { waypoints } = Astro.props;
   }
 
   .waypoint-label {
-    font-family: var(--font-mono);
+    font-family: var(--font-recursive);
+    font-variation-settings: var(--vf-label);
     font-size: var(--text-label);
     letter-spacing: var(--tracking-wide);
     text-transform: uppercase;
@@ -125,16 +126,43 @@ const { waypoints } = Astro.props;
 </style>
 
 <script>
+  import { digitRoll } from "../lib/reveal";
+
   function initWaypointNav() {
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-section]"));
     const dots = Array.from(document.querySelectorAll<HTMLElement>("[data-waypoint-dot]"));
     const links = Array.from(document.querySelectorAll<HTMLElement>("[data-waypoint-link]"));
     if (!sections.length) return;
 
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let currentActive: string | null = null;
+
     function setActive(id: string) {
+      if (id === currentActive) return;
+      currentActive = id;
+
       dots.forEach((d) => d.toggleAttribute("data-active", d.dataset.waypointDot === id));
       links.forEach((l) => l.toggleAttribute("data-active", l.dataset.waypointLink === id));
       document.body.dataset.activeSection = id;
+
+      // Dim every section except the one in focus — the tour has a spotlight,
+      // not an evenly-lit document.
+      sections.forEach((s) => {
+        s.classList.toggle("is-dimmed", s.dataset.section !== id);
+      });
+
+      // Re-roll the active section's watermark digits every time it becomes
+      // active — deliberately not gated to "first time only".
+      const activeSection = sections.find((s) => s.dataset.section === id);
+      const watermark = activeSection?.querySelector<HTMLElement>("[data-watermark]");
+      if (watermark) {
+        const final = watermark.dataset.watermark ?? watermark.textContent ?? "";
+        if (reduceMotion) {
+          watermark.textContent = final;
+        } else {
+          digitRoll(watermark, final);
+        }
+      }
     }
 
     const observer = new IntersectionObserver(
