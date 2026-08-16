@@ -1,0 +1,199 @@
+---
+---
+
+<div class="terminal" data-terminal>
+  <div class="terminal-chrome">
+    <span class="terminal-path" data-terminal-path>~</span>
+  </div>
+  <div class="terminal-body" data-terminal-body tabindex="0">
+    <p class="terminal-line terminal-intro">
+      type <span class="hl">help</span> to look around.
+    </p>
+    <div class="terminal-history" data-terminal-history></div>
+    <div class="terminal-input-row">
+      <span class="prompt-glyph" data-terminal-prompt>~ $</span>
+      <input
+        type="text"
+        class="terminal-input"
+        data-terminal-input
+        autocomplete="off"
+        autocapitalize="off"
+        spellcheck="false"
+        aria-label="Terminal command input"
+      />
+    </div>
+  </div>
+</div>
+
+<style>
+  .terminal {
+    width: 100%;
+    max-width: 640px;
+    border-radius: 6px;
+    background: var(--color-surface);
+    border: 1px solid oklch(55% 0.02 295 / 0.25);
+    overflow: hidden;
+    box-shadow: var(--glow-phosphor);
+    transition: box-shadow var(--duration-base) var(--ease-smooth);
+  }
+
+  .terminal[data-active="true"] {
+    box-shadow: var(--glow-pulse);
+  }
+
+  .terminal-chrome {
+    padding: var(--space-2) var(--space-4);
+    border-bottom: 1px solid oklch(55% 0.02 295 / 0.2);
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    color: var(--color-static);
+  }
+
+  .terminal-body {
+    padding: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: var(--text-terminal);
+    line-height: var(--leading-terminal);
+    height: 320px;
+    overflow-y: auto;
+    outline: none;
+  }
+
+  .terminal-line {
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin: 0 0 var(--space-2) 0;
+    color: var(--color-signal);
+  }
+
+  .terminal-intro {
+    color: var(--color-static);
+  }
+
+  .hl {
+    color: var(--color-phosphor);
+  }
+
+  .terminal-history .cmd-echo {
+    color: var(--color-static);
+  }
+  .terminal-history .cmd-echo .prompt-glyph {
+    color: var(--color-phosphor);
+    margin-right: var(--space-2);
+  }
+
+  .terminal-input-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .prompt-glyph {
+    color: var(--color-phosphor);
+    flex-shrink: 0;
+  }
+
+  .terminal-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-signal);
+    font-family: var(--font-mono);
+    font-size: var(--text-terminal);
+    caret-color: var(--color-pulse);
+  }
+
+  @media (max-width: 768px) {
+    .terminal-body {
+      height: 260px;
+    }
+  }
+</style>
+
+<script>
+  import { runCommand, type TerminalState } from "../lib/terminal-fs";
+
+  function initTerminal() {
+    const root = document.querySelector<HTMLElement>("[data-terminal]");
+    const body = document.querySelector<HTMLElement>("[data-terminal-body]");
+    const history = document.querySelector<HTMLElement>("[data-terminal-history]");
+    const input = document.querySelector<HTMLInputElement>("[data-terminal-input]");
+    const pathEl = document.querySelector<HTMLElement>("[data-terminal-path]");
+    const promptEl = document.querySelector<HTMLElement>("[data-terminal-prompt]");
+    if (!root || !body || !history || !input || !pathEl || !promptEl) return;
+
+    const state: TerminalState = { path: [] };
+    const cmdHistory: string[] = [];
+    let historyIndex = -1;
+
+    function currentPrompt() {
+      return (state.path.length ? "~/" + state.path.join("/") : "~") + " $";
+    }
+
+    function refreshPrompt() {
+      pathEl!.textContent = state.path.length ? "~/" + state.path.join("/") : "~";
+      promptEl!.textContent = currentPrompt();
+    }
+
+    function appendLine(text: string, isEcho = false) {
+      const line = document.createElement("p");
+      line.className = "terminal-line" + (isEcho ? " cmd-echo" : "");
+      if (isEcho) {
+        line.innerHTML = `<span class="prompt-glyph">${currentPrompt()}</span>${text}`;
+      } else {
+        line.textContent = text;
+      }
+      history!.appendChild(line);
+      body!.scrollTop = body!.scrollHeight;
+    }
+
+    input.addEventListener("focus", () => root!.setAttribute("data-active", "true"));
+    input.addEventListener("blur", () => root!.removeAttribute("data-active"));
+    body.addEventListener("click", () => input.focus());
+
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const raw = input.value;
+        appendLine(raw, true);
+        cmdHistory.push(raw);
+        historyIndex = cmdHistory.length;
+        input.value = "";
+
+        const result = runCommand(raw, state);
+        if (result.clear) {
+          history!.innerHTML = "";
+        } else if (result.output) {
+          appendLine(result.output);
+        }
+        if (result.open === "leraniode") {
+          window.open("https://github.com/leraniode", "_blank", "noopener");
+        }
+        refreshPrompt();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          historyIndex--;
+          input.value = cmdHistory[historyIndex] ?? "";
+        }
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        if (historyIndex < cmdHistory.length - 1) {
+          historyIndex++;
+          input.value = cmdHistory[historyIndex] ?? "";
+        } else {
+          historyIndex = cmdHistory.length;
+          input.value = "";
+        }
+      }
+    });
+
+    refreshPrompt();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initTerminal);
+  } else {
+    initTerminal();
+  }
+</script>
