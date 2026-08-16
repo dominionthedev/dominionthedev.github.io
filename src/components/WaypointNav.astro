@@ -12,9 +12,6 @@ const { waypoints } = Astro.props;
 ---
 
 <nav class="waypoint-nav" aria-label="Page sections">
-  <div class="waypoint-track">
-    <div class="waypoint-fill" data-waypoint-fill></div>
-  </div>
   <ol class="waypoint-list">
     {
       waypoints.map((wp) => (
@@ -32,31 +29,10 @@ const { waypoints } = Astro.props;
 <style>
   .waypoint-nav {
     position: fixed;
-    left: var(--space-8);
+    left: 38px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 100;
-    display: flex;
-    align-items: stretch;
-  }
-
-  .waypoint-track {
-    position: absolute;
-    left: 3px;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: oklch(55% 0.02 295 / 0.25);
-  }
-
-  .waypoint-fill {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 0%;
-    background: var(--color-phosphor);
-    transition: height var(--duration-base) var(--ease-smooth);
   }
 
   .waypoint-list {
@@ -88,8 +64,25 @@ const { waypoints } = Astro.props;
     outline: 2px solid oklch(55% 0.02 295 / 0.3);
     outline-offset: 0;
     flex-shrink: 0;
+    position: relative;
     transition: background var(--duration-base) var(--ease-smooth),
       outline-color var(--duration-base) var(--ease-smooth);
+  }
+
+  .waypoint-dot::before {
+    content: "";
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    width: 12px;
+    height: 1px;
+    background: oklch(55% 0.02 295 / 0.3);
+    transform: translateY(-50%);
+    transition: background var(--duration-base) var(--ease-smooth);
+  }
+
+  .waypoint-dot[data-active="true"]::before {
+    background: var(--color-phosphor);
   }
 
   .waypoint-dot[data-active="true"] {
@@ -123,7 +116,7 @@ const { waypoints } = Astro.props;
 
   @media (max-width: 768px) {
     .waypoint-nav {
-      left: var(--space-4);
+      left: 26px;
     }
     .waypoint-label {
       display: none;
@@ -136,12 +129,12 @@ const { waypoints } = Astro.props;
     const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-section]"));
     const dots = Array.from(document.querySelectorAll<HTMLElement>("[data-waypoint-dot]"));
     const links = Array.from(document.querySelectorAll<HTMLElement>("[data-waypoint-link]"));
-    const fill = document.querySelector<HTMLElement>("[data-waypoint-fill]");
-    if (!sections.length || !fill) return;
+    if (!sections.length) return;
 
     function setActive(id: string) {
       dots.forEach((d) => d.toggleAttribute("data-active", d.dataset.waypointDot === id));
       links.forEach((l) => l.toggleAttribute("data-active", l.dataset.waypointLink === id));
+      document.body.dataset.activeSection = id;
     }
 
     const observer = new IntersectionObserver(
@@ -157,16 +150,9 @@ const { waypoints } = Astro.props;
     );
     sections.forEach((s) => observer.observe(s));
 
-    function updateFill() {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = docHeight > 0 ? Math.min(1, scrollTop / docHeight) : 0;
-      fill!.style.height = `${progress * 100}%`;
-    }
-    window.addEventListener("scroll", updateFill, { passive: true });
-    updateFill();
-
-    // Reveal-on-scroll for anything marked .reveal
+    // Reveal-on-scroll for anything marked .reveal, plus a real depth shift —
+    // not just opacity, a slight scale-up from 0.97, so entering a section
+    // reads as arriving somewhere rather than a slideshow fade.
     const revealTargets = Array.from(document.querySelectorAll(".reveal"));
     const revealObserver = new IntersectionObserver(
       (entries) => {

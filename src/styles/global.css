@@ -74,6 +74,67 @@ body {
   position: relative;
 }
 
+/* Ambient wash — a slow, low-key color bleed keyed to the active section.
+   Fixed behind everything, big soft radial, barely there but it kills the
+   flat-void feeling between sections. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 15% 50%,
+    oklch(20% 0.035 295 / 0.6) 0%,
+    transparent 60%
+  );
+  opacity: 0;
+  transition:
+    opacity 900ms var(--ease-smooth),
+    background 900ms var(--ease-smooth);
+}
+
+body[data-active-section="hero"]::before {
+  opacity: 1;
+  background: radial-gradient(
+    circle at 20% 40%,
+    oklch(30% 0.05 155 / 0.5) 0%,
+    transparent 55%
+  );
+}
+body[data-active-section="philosophy"]::before {
+  opacity: 1;
+  background: radial-gradient(
+    circle at 80% 30%,
+    oklch(28% 0.06 350 / 0.4) 0%,
+    transparent 55%
+  );
+}
+body[data-active-section="terminal"]::before {
+  opacity: 1;
+  background: radial-gradient(
+    circle at 15% 60%,
+    oklch(30% 0.05 155 / 0.45) 0%,
+    transparent 55%
+  );
+}
+body[data-active-section="work"]::before {
+  opacity: 1;
+  background: radial-gradient(
+    circle at 85% 40%,
+    oklch(25% 0.04 295 / 0.5) 0%,
+    transparent 60%
+  );
+}
+body[data-active-section="connect"]::before {
+  opacity: 1;
+  background: radial-gradient(
+    circle at 20% 50%,
+    oklch(28% 0.06 350 / 0.4) 0%,
+    transparent 55%
+  );
+}
+
 /* Ambient film grain — texture, not motion. Static, ~2.5% opacity. */
 body::after {
   content: "";
@@ -136,14 +197,14 @@ a {
 
 .reveal {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px) scale(0.98);
   transition:
-    opacity var(--duration-base) var(--ease-smooth),
-    transform var(--duration-base) var(--ease-smooth);
+    opacity var(--duration-slow) var(--ease-smooth),
+    transform var(--duration-slow) var(--ease-smooth);
 }
 .reveal.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,113 @@
+---
+---
+
+<div class="boot-overlay" data-boot-overlay>
+  <pre class="boot-lines" data-boot-lines></pre>
+</div>
+
+<style>
+  .boot-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: var(--color-void);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-6);
+    transition: opacity 400ms var(--ease-smooth);
+  }
+
+  .boot-overlay[data-hidden="true"] {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .boot-lines {
+    font-family: var(--font-mono);
+    font-size: var(--text-terminal);
+    color: var(--color-phosphor);
+    white-space: pre-wrap;
+    max-width: 480px;
+    width: 100%;
+    margin: 0;
+    line-height: 1.8;
+  }
+</style>
+
+<script>
+  const BOOT_LINES = [
+    "booting dominiondev_os...",
+    "loading philosophy.module ... ok",
+    "mounting /work ... ok",
+    "spawning shell_",
+  ];
+
+  function skipBoot() {
+    const overlay = document.querySelector<HTMLElement>("[data-boot-overlay]");
+    if (!overlay) return;
+    overlay.setAttribute("data-hidden", "true");
+    document.body.style.overflow = "";
+    window.dispatchEvent(new CustomEvent("dd:boot-complete"));
+  }
+
+  function runBoot() {
+    const overlay = document.querySelector<HTMLElement>("[data-boot-overlay]");
+    const linesEl = document.querySelector<HTMLElement>("[data-boot-lines]");
+    if (!overlay || !linesEl) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const alreadyBooted = sessionStorage.getItem("dd-booted") === "1";
+
+    if (reduceMotion || alreadyBooted) {
+      overlay.setAttribute("data-hidden", "true");
+      window.dispatchEvent(new CustomEvent("dd:boot-complete"));
+      return;
+    }
+
+    sessionStorage.setItem("dd-booted", "1");
+    document.body.style.overflow = "hidden";
+
+    // Allow click/keypress to skip — never trap someone in a boot animation.
+    overlay.addEventListener("click", finishNow, { once: true });
+    window.addEventListener("keydown", finishNow, { once: true });
+
+    let finished = false;
+    function finishNow() {
+      if (finished) return;
+      finished = true;
+      skipBoot();
+    }
+
+    let lineIndex = 0;
+    let charIndex = 0;
+    const displayed: string[] = [];
+
+    function typeTick() {
+      if (finished) return;
+      const line = BOOT_LINES[lineIndex];
+      displayed[lineIndex] = line.slice(0, charIndex);
+      linesEl!.textContent = displayed.join("\n");
+      charIndex++;
+
+      if (charIndex <= line.length) {
+        setTimeout(typeTick, 16);
+      } else {
+        lineIndex++;
+        charIndex = 0;
+        if (lineIndex < BOOT_LINES.length) {
+          setTimeout(typeTick, 120);
+        } else {
+          setTimeout(finishNow, 380);
+        }
+      }
+    }
+    typeTick();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", runBoot);
+  } else {
+    runBoot();
+  }
+</script>

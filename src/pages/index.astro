@@ -2,6 +2,8 @@
 import Layout from "../layouts/Layout.astro";
 import WaypointNav from "../components/WaypointNav.astro";
 import Terminal from "../components/Terminal.astro";
+import RouteMeter from "../components/RouteMeter.astro";
+import BootOverlay from "../components/BootOverlay.astro";
 
 const waypoints = [
   { id: "hero", label: "start" },
@@ -102,44 +104,32 @@ const tiers: { key: Tier; label: string }[] = [
 ---
 
 <Layout>
+  <BootOverlay />
+  <RouteMeter />
   <WaypointNav waypoints={waypoints} />
 
   <script>
-    function bootTypewriter() {
+    function revealHero() {
       const el = document.querySelector<HTMLElement>("[data-typewriter]");
       if (!el) return;
-      const text = el.dataset.text ?? "";
-
-      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const alreadyBooted = sessionStorage.getItem("dd-booted") === "1";
-
-      if (reduceMotion || alreadyBooted) {
-        el.textContent = text;
-        return;
-      }
-
-      sessionStorage.setItem("dd-booted", "1");
-      let i = 0;
-      const speed = 38; // ms per char — boot sequence stays under ~1s total
-      function tick() {
-        el!.textContent = text.slice(0, i);
-        i++;
-        if (i <= text.length) {
-          setTimeout(tick, speed);
-        }
-      }
-      tick();
+      el.textContent = el.dataset.text ?? "";
+      el.closest(".hero-thesis")?.classList.add("is-visible");
     }
 
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", bootTypewriter);
+    // The boot overlay may resolve synchronously (repeat session, reduced
+    // motion) before this script's listener attaches — check its actual
+    // resolved state directly instead of trusting the event alone.
+    const overlay = document.querySelector<HTMLElement>("[data-boot-overlay]");
+    if (overlay?.dataset.hidden === "true") {
+      revealHero();
     } else {
-      bootTypewriter();
+      window.addEventListener("dd:boot-complete", revealHero, { once: true });
     }
   </script>
 
   <main class="tour">
     <section id="hero" data-section="hero" class="section section--hero">
+      <span class="section-watermark" aria-hidden="true">00</span>
       <p class="label reveal">dominiondev</p>
       <h1 class="hero-thesis">
         <span data-typewriter data-text="I live in the terminal"></span><span
@@ -150,7 +140,10 @@ const tiers: { key: Tier; label: string }[] = [
       <p class="hero-sub reveal">A tour, not a resume.</p>
     </section>
 
+    <span class="section-divider" aria-hidden="true">┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈</span>
+
     <section id="philosophy" data-section="philosophy" class="section">
+      <span class="section-watermark" aria-hidden="true">01</span>
       <p class="label reveal">01 — philosophy</p>
       <h2 class="reveal">How I think.</h2>
       <div class="philosophy-list">
@@ -168,7 +161,10 @@ const tiers: { key: Tier; label: string }[] = [
       </div>
     </section>
 
+    <span class="section-divider" aria-hidden="true">┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈</span>
+
     <section id="terminal" data-section="terminal" class="section">
+      <span class="section-watermark" aria-hidden="true">02</span>
       <p class="label reveal">02 — how i work</p>
       <h2 class="reveal">Walk through it yourself.</h2>
       <div class="reveal">
@@ -176,7 +172,10 @@ const tiers: { key: Tier; label: string }[] = [
       </div>
     </section>
 
+    <span class="section-divider" aria-hidden="true">┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈</span>
+
     <section id="work" data-section="work" class="section section--work">
+      <span class="section-watermark" aria-hidden="true">03</span>
       <p class="label reveal">03 — work</p>
       <h2 class="reveal">What I've built and what's in progress.</h2>
 
@@ -207,7 +206,10 @@ const tiers: { key: Tier; label: string }[] = [
       }
     </section>
 
+    <span class="section-divider" aria-hidden="true">┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈</span>
+
     <section id="connect" data-section="connect" class="section">
+      <span class="section-watermark" aria-hidden="true">04</span>
       <p class="label reveal">04 — connect</p>
       <h2 class="reveal">How to reach me.</h2>
       <div class="connect-list">
@@ -243,16 +245,57 @@ const tiers: { key: Tier; label: string }[] = [
   .tour {
     max-width: 720px;
     margin: 0 auto;
-    padding-left: var(--space-24);
+    padding-left: calc(var(--space-24) + 12px);
   }
 
   .section {
+    position: relative;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: var(--space-4);
     padding: var(--space-16) var(--space-6);
+    overflow: hidden;
+  }
+
+  .section-watermark {
+    position: absolute;
+    top: -0.15em;
+    right: var(--space-4);
+    font-family: var(--font-mono);
+    font-size: 13rem;
+    font-weight: 700;
+    line-height: 1;
+    color: oklch(94% 0.02 295 / 0.04);
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+  }
+
+  .section > *:not(.section-watermark) {
+    position: relative;
+    z-index: 1;
+  }
+
+  .section-divider {
+    display: block;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    color: oklch(55% 0.02 295 / 0.25);
+    padding: var(--space-4) 0;
+    max-width: 720px;
+    margin: 0 auto;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .section-watermark {
+      font-size: 7rem;
+    }
   }
 
   .section--hero {
@@ -375,6 +418,12 @@ const tiers: { key: Tier; label: string }[] = [
   .hero-thesis {
     display: inline-flex;
     align-items: baseline;
+    opacity: 0;
+    transition: opacity 500ms var(--ease-smooth);
+  }
+
+  .hero-thesis.is-visible {
+    opacity: 1;
   }
 
   .hero-cursor {
@@ -439,7 +488,7 @@ const tiers: { key: Tier; label: string }[] = [
 
   @media (max-width: 768px) {
     .tour {
-      padding-left: var(--space-12);
+      padding-left: calc(var(--space-12) + 4px);
     }
   }
 </style>

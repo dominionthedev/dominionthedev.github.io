@@ -126,6 +126,7 @@
     const state: TerminalState = { path: [] };
     const cmdHistory: string[] = [];
     let historyIndex = -1;
+    let userInteracted = false;
 
     function currentPrompt() {
       return (state.path.length ? "~/" + state.path.join("/") : "~") + " $";
@@ -148,28 +149,39 @@
       body!.scrollTop = body!.scrollHeight;
     }
 
+    function submit(raw: string) {
+      appendLine(raw, true);
+      cmdHistory.push(raw);
+      historyIndex = cmdHistory.length;
+      input!.value = "";
+
+      const result = runCommand(raw, state);
+      if (result.clear) {
+        history!.innerHTML = "";
+      } else if (result.output) {
+        appendLine(result.output);
+      }
+      if (result.open === "leraniode") {
+        window.open("https://github.com/leraniode", "_blank", "noopener");
+      }
+      refreshPrompt();
+    }
+
+    function markInteracted() {
+      userInteracted = true;
+    }
+
     input.addEventListener("focus", () => root!.setAttribute("data-active", "true"));
     input.addEventListener("blur", () => root!.removeAttribute("data-active"));
+    input.addEventListener("keydown", markInteracted, { once: true });
+    input.addEventListener("pointerdown", markInteracted, { once: true });
     body.addEventListener("click", () => input.focus());
 
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         const raw = input.value;
-        appendLine(raw, true);
-        cmdHistory.push(raw);
-        historyIndex = cmdHistory.length;
-        input.value = "";
-
-        const result = runCommand(raw, state);
-        if (result.clear) {
-          history!.innerHTML = "";
-        } else if (result.output) {
-          appendLine(result.output);
-        }
-        if (result.open === "leraniode") {
-          window.open("https://github.com/leraniode", "_blank", "noopener");
-        }
-        refreshPrompt();
+        if (!raw.trim()) return;
+        submit(raw);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         if (historyIndex > 0) {
@@ -189,6 +201,43 @@
     });
 
     refreshPrompt();
+
+    // Ghost hint — a beat after the terminal comes into view, an unseen hand
+    // types "help" and runs it, once, so people who'd never think to type
+    // anything still see the thing is alive. Cancels the moment a real
+    // person touches the input.
+    const HINT = "help";
+    let hintPlayed = sessionStorage.getItem("dd-terminal-hint") === "1";
+
+    function ghostType(i = 0) {
+      if (userInteracted || hintPlayed) return;
+      if (i <= HINT.length) {
+        input!.value = HINT.slice(0, i);
+        setTimeout(() => ghostType(i + 1), 70);
+      } else {
+        setTimeout(() => {
+          if (userInteracted) return;
+          hintPlayed = true;
+          sessionStorage.setItem("dd-terminal-hint", "1");
+          submit(HINT);
+        }, 450);
+      }
+    }
+
+    if (!hintPlayed) {
+      const hintObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !userInteracted && !hintPlayed) {
+              hintObserver.disconnect();
+              setTimeout(() => ghostType(), 900);
+            }
+          });
+        },
+        { threshold: 0.6 }
+      );
+      hintObserver.observe(root!);
+    }
   }
 
   if (document.readyState === "loading") {
