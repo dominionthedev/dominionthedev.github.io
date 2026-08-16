@@ -347,17 +347,30 @@ const tiers: { key: Tier; label: string }[] = [
     align-items: baseline;
     padding: var(--space-3) var(--space-3);
     border-left: 2px solid transparent;
+    transform: translateX(0);
     transition: border-color var(--duration-base) var(--ease-smooth),
-      background var(--duration-base) var(--ease-smooth);
+      background var(--duration-base) var(--ease-smooth),
+      transform var(--duration-base) var(--ease-smooth),
+      box-shadow var(--duration-base) var(--ease-smooth);
   }
 
   .work-row:hover {
     background: oklch(20% 0.035 295 / 0.6);
+    transform: translateX(6px);
   }
 
-  .work-row--shipped:hover { border-left-color: var(--color-phosphor); }
-  .work-row--in-progress:hover { border-left-color: var(--color-pulse); }
-  .work-row--experimental:hover { border-left-color: var(--color-static); }
+  .work-row--shipped:hover {
+    border-left-color: var(--color-phosphor);
+    box-shadow: -6px 0 16px -8px oklch(85% 0.22 155 / 0.4);
+  }
+  .work-row--in-progress:hover {
+    border-left-color: var(--color-pulse);
+    box-shadow: -6px 0 16px -8px oklch(65% 0.25 350 / 0.4);
+  }
+  .work-row--experimental:hover {
+    border-left-color: var(--color-static);
+    box-shadow: -6px 0 16px -8px oklch(55% 0.02 295 / 0.3);
+  }
 
   .work-name {
     font-family: var(--font-mono);

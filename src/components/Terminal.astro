@@ -59,11 +59,14 @@
     outline: none;
   }
 
-  .terminal-line {
+  :global(.terminal-line) {
     white-space: pre-wrap;
     word-break: break-word;
     margin: 0 0 var(--space-2) 0;
     color: var(--color-signal);
+    font-family: var(--font-mono);
+    font-size: var(--text-terminal);
+    line-height: var(--leading-terminal);
   }
 
   .terminal-intro {
@@ -74,10 +77,10 @@
     color: var(--color-phosphor);
   }
 
-  .terminal-history .cmd-echo {
+  :global(.terminal-history .cmd-echo) {
     color: var(--color-static);
   }
-  .terminal-history .cmd-echo .prompt-glyph {
+  :global(.terminal-history .cmd-echo .prompt-glyph) {
     color: var(--color-phosphor);
     margin-right: var(--space-2);
   }
@@ -141,7 +144,7 @@
       const line = document.createElement("p");
       line.className = "terminal-line" + (isEcho ? " cmd-echo" : "");
       if (isEcho) {
-        line.innerHTML = `<span class="prompt-glyph">${currentPrompt()}</span>${text}`;
+        line.innerHTML = `<span class="prompt-glyph">${currentPrompt()}</span> ${text}`;
       } else {
         line.textContent = text;
       }

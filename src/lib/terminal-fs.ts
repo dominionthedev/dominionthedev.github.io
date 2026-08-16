@@ -171,6 +171,15 @@ export function runCommand(
       return { output: randomError(`open ${arg}`) };
     }
 
+    case "sudo":
+      return { output: "nice try. this isn't your terminal." };
+
+    case "rm":
+      if (args.join(" ").includes("-rf")) {
+        return { output: "cute. nothing to destroy — it's all read-only." };
+      }
+      return { output: randomError(cmd) };
+
     case "clear":
       return { output: "", clear: true };
 
