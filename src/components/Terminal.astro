@@ -29,16 +29,27 @@
   .terminal {
     width: 100%;
     max-width: 640px;
+    margin-left: 0;
+    margin-right: 0;
     border-radius: 6px;
     background: var(--color-surface);
     border: 1px solid oklch(55% 0.02 295 / 0.25);
     overflow: hidden;
     box-shadow: var(--glow-phosphor);
-    transition: box-shadow var(--duration-base) var(--ease-smooth);
+    transition: box-shadow var(--duration-base) var(--ease-smooth),
+      max-width 550ms var(--ease-smooth),
+      margin 550ms var(--ease-smooth);
   }
 
   .terminal[data-active="true"] {
     box-shadow: var(--glow-pulse);
+  }
+
+  @media (min-width: 769px) {
+    .terminal[data-active="true"] {
+      max-width: calc(100% + 140px);
+      margin-right: -140px;
+    }
   }
 
   .terminal-chrome {
@@ -48,6 +59,11 @@
     font-variation-settings: var(--vf-terminal);
     font-size: var(--text-label);
     color: var(--color-static);
+    transition: font-size 550ms var(--ease-smooth);
+  }
+
+  .terminal[data-active="true"] .terminal-chrome {
+    font-size: calc(var(--text-label) * 1.08);
   }
 
   .terminal-body {
@@ -59,6 +75,14 @@
     height: 320px;
     overflow-y: auto;
     outline: none;
+    transition: height 550ms var(--ease-smooth), font-size 550ms var(--ease-smooth),
+      padding 550ms var(--ease-smooth);
+  }
+
+  .terminal[data-active="true"] .terminal-body {
+    height: 420px;
+    font-size: calc(var(--text-terminal) * 1.12);
+    padding: var(--space-6);
   }
 
   :global(.terminal-line) {
@@ -170,6 +194,9 @@
       }
       if (result.open === "leraniode") {
         window.open("https://github.com/leraniode", "_blank", "noopener");
+      }
+      if (result.open === "aether") {
+        window.open("https://dominionthedev.github.io/aether", "_blank", "noopener");
       }
       refreshPrompt();
     }

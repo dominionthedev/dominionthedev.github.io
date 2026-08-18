@@ -114,6 +114,7 @@ export function runCommand(
           "  pwd             where you are",
           "  whoami          who this site belongs to",
           "  open leraniode  the actual company site",
+          "  open aether     a terminal OS, a separate thing",
           "  clear           clear the screen",
         ].join("\n"),
       };
@@ -166,6 +167,12 @@ export function runCommand(
         return {
           output: "opening github.com/leraniode in a new tab_",
           open: "leraniode",
+        };
+      }
+      if (arg === "aether") {
+        return {
+          output: "opening aether — a terminal OS, in a new tab_",
+          open: "aether",
         };
       }
       return { output: randomError(`open ${arg}`) };

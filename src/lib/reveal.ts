@@ -43,6 +43,26 @@ export function scrambleType(
   });
 }
 
+export function typeText(
+  el: HTMLElement,
+  text: string,
+  speed = 44,
+): Promise<void> {
+  return new Promise((resolve) => {
+    let i = 0;
+    function tick() {
+      el.textContent = text.slice(0, i);
+      i++;
+      if (i <= text.length) {
+        setTimeout(tick, speed);
+      } else {
+        resolve();
+      }
+    }
+    tick();
+  });
+}
+
 export function digitRoll(
   el: HTMLElement,
   finalDigits: string,
